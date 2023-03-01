@@ -47,7 +47,8 @@ export default {
       inputUrl: "192.168.10.6",
       inputPort: "9090",
       addrOrId: false,
-      robotId: ""
+      robotId: "",
+      socket:""
     };
   },
   mounted() {
@@ -66,44 +67,37 @@ export default {
         else e.cancelBubble = true;
       };
     });
+
+    // 与localAgent建立websocket连接
+    this.socket = new WebSocket("ws://localhost:3000/echo");
+    this.socket.onopen = function () {
+        console.log("connected to localAgent");
+    };
   },
   methods: {
     setConnect() {
+      var that = this
+      // 通过id建立连接
       if (this.addrOrId) {
         if (/[0-9a-zA-Z]+/.test(this.robotId)) {
-          let id = this.robotId;
-          let localUrl = "ws://127.0.0.1:9000";
-          fetch("http://localhost:4658/admin/connect", {
-            method: "POST",
-            mode: "cors",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              entity: { id: id },
-              clientURI: localUrl
-            })
-          })
-            .then(res => res.json())
-            .then(json => {
-              if (json.code === 200) {
-                this.$message({
-                  message: json.msg,
-                  type: "error"
-                });
-                this.ShowUrl = localUrl;
-                this.$ROS.close();
-                this.$ROS.connect(this.ShowUrl);
-                this.$emit("childUrl", this.ShowUrl.slice(5));
-                sessionStorage.setItem("store", this.ShowUrl);
-              } else {
-                this.$message({
-                  message: json.msg,
-                  type: "error"
-                });
-              }
-            })
-            .catch(e => console.log(e));
+          // 将robotID通过websocket连接，发送给localAgent
+          this.socket.send(this.robotId)
+
+          this.socket.onmessage = function (e) {
+            var obj = JSON.parse(e.data)
+            var isSuccess = "fail"
+            isSuccess = obj.isSuccess
+            var addr
+            // 如果成功，则和localAgent建立连接
+            if (isSuccess == "success" ) {
+              addr = 'ws://localhost:3001/echo'
+            } else {
+              // 不成功，则通过frp建立ros连接
+              addr = 'ws://47.112.96.50:9090'
+            }
+            
+            that.initializeRos(addr)
+          }
         } else {
           this.$message({
             message: "id只允许字母与数字",
@@ -130,6 +124,11 @@ export default {
           });
         }
       }
+    },
+    initializeRos(addr) {
+      console.log("addr:",addr)
+      this.$ROS.close();
+      this.$ROS.connect(addr)
     }
   }
 };
