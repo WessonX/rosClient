@@ -90,7 +90,7 @@ export default {
             var addr
             // 如果成功，则和localAgent建立连接
             if (isSuccess == "success" ) {
-              addr = 'ws://localhost:3001/echo'
+              addr = 'ws://localhost:3000/echo'
             } else {
               // 不成功，则通过frp建立ros连接
               addr = 'ws://47.112.96.50:9090'
@@ -125,6 +125,8 @@ export default {
         }
       }
     },
+
+    // 初始化ros的连接配置
     initializeRos(addr) {
       console.log("addr:",addr)
       this.$ROS.close();
