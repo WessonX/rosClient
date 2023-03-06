@@ -90,12 +90,14 @@ export default {
             var addr
             // 如果成功，则和localAgent建立连接
             if (isSuccess == "success" ) {
-              addr = 'ws://localhost:3000/echo'
+              addr = that.$GLOBAL.localAgent_addr
             } else {
               // 不成功，则通过frp建立ros连接
-              addr = 'ws://47.112.96.50:9090'
+              addr = that.$GLOBAL.relayAddr
             }
             
+            // 将连接状态存储到sessionStorage中
+            sessionStorage.setItem("isSuccess",isSuccess)
             that.initializeRos(addr)
           }
         } else {

@@ -188,23 +188,25 @@ export default {
         else e.cancelBubble = true;
       };
     });
-    let url = sessionStorage.getItem("store");
-    if (url) {
-      this.$URL = url;
-      this.url = url.slice(5);
+    // 获取cookie中的isSuccess连接状态。根据之前的连接状态，连接对应的地址
+    let isSuccess = sessionStorage.getItem("isSuccess")
+    if (isSuccess == "success") {
       this.$ROS.close();
-      this.$ROS.connect(url);
-      this.$ROS.on("close", () => {
-        this.$message({
-          message: "机器人连接已经断开,请检查后重新连接",
-          type: "error"
-        });
-        if (this.$router.history.current.name != "Setting")
-          this.$router.push({
-            name: "Setting"
-          });
-      });
+      this.$ROS.connect(this.$GLOBAL.localAgent_addr);
+    } else if (isSuccess == "fail") {
+      this.$ROS.close();
+      this.$ROS.connect(this.$GLOBAL.relayAddr);
     }
+    this.$ROS.on("close", () => {
+      this.$message({
+        message: "机器人连接已经断开,请检查后重新连接",
+        type: "error"
+      });
+      if (this.$router.history.current.name != "Setting")
+        this.$router.push({
+          name: "Setting"
+        });
+    });
     // 循环检测连接状态并更新
     const state = { 0: "CONNECTING", 1: "OPEN", 2: "CLOSING", 3: "CLOSED" };
     const tag = { 0: "info", 1: "success", 2: "warning", 3: "danger" };
